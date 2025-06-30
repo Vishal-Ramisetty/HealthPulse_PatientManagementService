@@ -11,4 +11,6 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     // This is a inbuild method provided by JPARespisotory that is being explicitly extracted
     boolean existsByEmail(String email);
+    // Use this method to prevent bug in case other fields are updated for uuid that has same email
+    boolean existsByEmailAndIdNot(String email,UUID id);
 }

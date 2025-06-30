@@ -28,4 +28,12 @@ public class GlobalExceptionHandler {
         errors.put("Error Message", ex.getMessage());
         return ResponseEntity.badRequest().body(errors);
     }
+
+    @ExceptionHandler(UserIdDoesNotExistsException.class)
+    public ResponseEntity<?> handleUserIdDoesNotExistsException(UserIdDoesNotExistsException ex){
+        HashMap<String, String> errors = new HashMap<>();
+        log.warn("Patient with id does not exists!!! {}",ex.getMessage());
+        errors.put("Error Message", ex.getMessage());
+        return ResponseEntity.badRequest().body(errors);
+    }
 }
