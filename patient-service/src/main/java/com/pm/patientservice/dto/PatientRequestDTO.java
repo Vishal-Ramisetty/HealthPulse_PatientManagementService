@@ -4,10 +4,12 @@ import com.pm.patientservice.dto.validators.CreatePatientValidationGroup;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class PatientRequestDTO {
 
     @NotBlank(message = "Name is a required Field")
+    @Size(max=100,message = "Name cannot exceed 100 Characters !!!")
     private String name;
     @NotBlank(message = "Address is a required Field")
     private String address;
@@ -16,8 +18,8 @@ public class PatientRequestDTO {
     private String email;
     @NotNull(message = "Date of birth is a required Field")
     private String dateOfBirth;
-//    group= CreatePatientValidationGroup.class
-    @NotNull(message = "Registered date is a required Field")
+    // This @NotNull is only valid during Creation of patient and not while updating patient
+    @NotNull( groups= CreatePatientValidationGroup.class,message = "Registered date is a required Field")
     private String registeredDate;
 
     public String getName() {
