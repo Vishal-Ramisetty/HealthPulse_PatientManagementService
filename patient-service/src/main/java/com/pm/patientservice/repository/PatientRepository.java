@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
+    // This is a inbuild method provided by JPARespisotory that is being explicitly extracted
+    boolean existsByEmail(String email);
 }
