@@ -5,6 +5,7 @@ import com.pm.patientservice.dto.PatientResponseDTO;
 import com.pm.patientservice.exception.EmailAlreadyExistsException;
 import com.pm.patientservice.exception.UserIdDoesNotExistsException;
 import com.pm.patientservice.grpc.BillingServiceGrpcClient;
+import com.pm.patientservice.kafka.KafkaProducer;
 import com.pm.patientservice.mapper.PatientMapper;
 import com.pm.patientservice.model.Patient;
 import com.pm.patientservice.repository.PatientRepository;
@@ -20,12 +21,15 @@ public class PatientService {
 
     PatientRepository patientRepository;
     private final BillingServiceGrpcClient billingServiceGrpcClient;
+    KafkaProducer kafkaProducer;
 
     // Here no need of auto-wired as a constructor with single parameter has auto-dependency injection
     public PatientService(PatientRepository patientRepository,
-                          BillingServiceGrpcClient billingServiceGrpcClient) {
+                          BillingServiceGrpcClient billingServiceGrpcClient,
+                          KafkaProducer kafkaProducer) {
         this.patientRepository = patientRepository;
         this.billingServiceGrpcClient = billingServiceGrpcClient;
+        this.kafkaProducer = kafkaProducer;
     }
 
     public List<PatientResponseDTO> getAllPatients() {
@@ -42,6 +46,9 @@ public class PatientService {
         patientRepository.save(patient);
         // Call the Billing Service to create a billing account for the patient using gRPC- Microservice Communication
         billingServiceGrpcClient.createBillingAccount(patient.getId().toString(), patient.getName(),patient.getEmail());
+
+        // Send an event to Kafka for the patient creation
+        kafkaProducer.sendEvent(patient, "PATIENT_CREATED");
         return PatientMapper.toDTO(patient);
     }
 

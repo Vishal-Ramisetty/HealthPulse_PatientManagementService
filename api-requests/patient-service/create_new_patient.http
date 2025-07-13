@@ -3,9 +3,9 @@ POST http://localhost:4000/patients
 Content-Type: application/json
 
 {
-"name": "Kishal",
+"name": "Kafka Client3",
 "address": "#1 ABC Street",
-"email" : "abc@email.com",
+"email" : "testkafka3@email.com",
 "dateOfBirth":"2000-01-02",
 "registeredDate":"2025-01-05"
 }
