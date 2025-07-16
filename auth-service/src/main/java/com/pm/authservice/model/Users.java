@@ -6,16 +6,16 @@ import java.util.UUID;
 
 @Document(collection = "users")
 public class Users {
-    private UUID id;
+    private String id;
     private String email;
     private String password;
     private String role;
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 

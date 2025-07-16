@@ -46,9 +46,10 @@ public class MongoConfig {
 //        return MongoClients.create(settings);
 //    }
 
-    @Bean
+
     // In Docker Container  uri--> mongodb://admin_viewer:password@auth-service-mongodb:27017/mongoAuthdb
     // In Local uri---> mongodb://localhost:27017/mongoAuthdb
+    @Bean
     public MongoClient mongoClient(@Value("${spring.data.mongodb.uri}") String uri) {
 //    public MongoClient mongoClient() {
 //        String uri = "mongodb://admin_viewer:password@auth-service-mongodb:27017/mongoAuthdb";
