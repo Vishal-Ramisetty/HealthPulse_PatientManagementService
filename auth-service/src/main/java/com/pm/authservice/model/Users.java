@@ -1,16 +1,18 @@
 package com.pm.authservice.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.util.UUID;
 
 @Document(collection = "users")
 public class Users {
+
+    @MongoId
     private String id;
     private String email;
     private String password;
     private String role;
-
     public String getId() {
         return id;
     }

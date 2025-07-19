@@ -17,9 +17,19 @@ spring:
                       filters:
                         - StripPrefix=1
 
+                      # REST-CLIENT ---> http://localhost:4004/auth/**
+                      # Reroute via API-GATEWAY  --> http://auth-service:4005/**
+                      #Http --> Https
+                    - id: auth-service-route
+                      uri: http://auth-service-2:4005
+                      predicates:
+                        - Path=/auth/**
+                      filters:
+                        - StripPrefix=1
+
                     # Route for /api/docs/patients to patient-service /v3/api-docs
                     # REST-CLIENT ---> http://localhost:4004/api-docs/patients
-                    # Reroute via API-GATEWAY  --> http://patient-service:4000/v3/api-docs
+                    # Reroute via API-GATEWAY  --> https://patient-service:4000/v3/api-docs
                     - id: api-docs-patient-route
                       uri: http://patient-service:4000
                       predicates:
