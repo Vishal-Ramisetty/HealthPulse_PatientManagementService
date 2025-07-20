@@ -1,6 +1,14 @@
 server:
   port: 4004 # Gateway listens on port 4004 - this is the entry point for the API Gateway
 
+# Dummy configuration for the authentication service
+auth:
+  service:
+    url: http://auth-service-2:4005 # URL of the authentication service
+#    jwt:
+#      secret: your_jwt_secret_key # Secret key for JWT validation
+#      issuer: your_jwt_issuer # Issuer of the JWT token
+
 spring:
   cloud:
     gateway:
@@ -16,6 +24,7 @@ spring:
                         - Path=/api/patients/**
                       filters:
                         - StripPrefix=1
+                        - JwtValidation
 
                       # REST-CLIENT ---> http://localhost:4004/auth/**
                       # Reroute via API-GATEWAY  --> http://auth-service:4005/**
