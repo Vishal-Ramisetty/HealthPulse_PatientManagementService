@@ -10,6 +10,7 @@
         <module name="auth-service-2dot0" />
         <module name="analytics-service" />
         <module name="api-gateway" />
+        <module name="Infrastructure" />
         <module name="patient-service" />
         <module name="integration-tests" />
         <module name="billing-service" />
