@@ -5,20 +5,24 @@ import software.amazon.awscdk.services.ec2.InstanceClass;
 import software.amazon.awscdk.services.ec2.InstanceSize;
 import software.amazon.awscdk.services.ec2.InstanceType;
 import software.amazon.awscdk.services.ec2.Vpc;
-import software.amazon.awscdk.services.ecs.CloudMapNamespaceOptions;
-import software.amazon.awscdk.services.ecs.Cluster;
+import software.amazon.awscdk.services.ecs.*;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.msk.CfnCluster;
 import software.amazon.awscdk.services.rds.*;
 import software.amazon.awscdk.services.route53.CfnHealthCheck;
 
 import java.lang.annotation.RetentionPolicy;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LocalStack extends Stack {
 
     private static final String LocalStackId = "LocalStack12345678";
     private final Vpc vpc;
-
+    private final Cluster ecsCluster;
     public LocalStack(final App scope, final String id, final StackProps props){
         super(scope,id,props);
         this.vpc= createVpc();
@@ -26,8 +30,8 @@ public class LocalStack extends Stack {
         DatabaseInstance patientServiceDb = createDatabaseInstance("PatientServiceDb", "patient-service-db");
         CfnHealthCheck authServiceDbHealthCheck = creatDbHealthCheck(authServiceDb, "AuthServiceDbHealthCheck");
         CfnHealthCheck patientServiceDbHealthCheck = creatDbHealthCheck(patientServiceDb, "PatientServiceDbHealthCheck");
-        CfnCluster createMskCluster = createMskCluster("MyLocalStackMskCluster", "localstack-msk-cluster");
-        Cluster createEcsCluster = createEcsCluster();
+        CfnCluster mskCluster = createMskCluster("MyLocalStackMskCluster", "localstack-msk-cluster");
+        this.ecsCluster = createEcsCluster();
     }
 
     private Vpc createVpc(){
@@ -77,6 +81,65 @@ public class LocalStack extends Stack {
                         .build())
                 .build();
     }
+    //
+    private FargateService createFargateService(String id,
+                                                String imageName, List<Integer> ports, DatabaseInstance db,
+                                                Map<String,String> additionalEnvironmentVariables){
+        FargateTaskDefinition taskDefinition =
+                FargateTaskDefinition.Builder.create(this,id +"Task" )
+                        .cpu(256)
+                        .memoryLimitMiB(512)
+                        .build();
+
+        ContainerDefinitionOptions.Builder containerOptionsBuilder =
+                ContainerDefinitionOptions.builder()
+                        .image(ContainerImage.fromRegistry(imageName))
+                        .portMappings(ports.stream()
+                        .map(port -> PortMapping.builder()
+                                        .containerPort(port)
+                                .hostPort(port)
+                                        .build())
+                                .toList())
+                                .logging(LogDriver.awsLogs(AwsLogDriverProps.builder()
+                                                .logGroup(LogGroup.Builder.create(this, id + "LogGroup")
+                                                .logGroupName("/ecs/" + imageName)
+                                                .removalPolicy(RemovalPolicy.DESTROY)
+                                                .retention(RetentionDays.FIVE_DAYS)
+                                        .build())
+                                        .streamPrefix(imageName)
+                                        .build()));
+
+        Map<String, String> envVars  = new HashMap<>();
+        envVars.put("SPRING_KAFKA_BOOTSTRAP_SERVERS", "localhost:localstack.cloud:4510, localhost:localstack.cloud:4511, " +
+                "localhost:localstack.cloud:4512");
+        if(additionalEnvironmentVariables !=null){
+            envVars.putAll(additionalEnvironmentVariables);
+        }
+        if(db != null){
+            envVars.put("SPRING_DATASOURCE_URL", "jdbc:postgresql://%s:%s:%s-db"
+                    .formatted(db.getDbInstanceEndpointAddress()
+                            , db.getDbInstanceEndpointPort(),imageName));
+            envVars.put("SPRING_DATASOURCE_USERNAME", "admin_user");
+            envVars.put("SPRING_DATASOURCE_PASSWORD", db.getSecret().secretValueFromJson("password")
+                    .toString());
+            envVars.put("SPRING_JPA_HIBERNATE_DDL_AUTO", "update");
+            envVars.put("SPRING_SQL_INIT_MODE", "always");
+            envVars.put("SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT","600000");
+        }
+
+        containerOptionsBuilder.environment(envVars);
+        taskDefinition.addContainer(imageName + "Container"
+        , containerOptionsBuilder.build());
+
+        return FargateService.Builder.create(this, id)
+                .cluster(ecsCluster)
+                .taskDefinition(taskDefinition)
+                .assignPublicIp(false)
+                .desiredCount(1)
+                .serviceName(imageName)
+                .build();
+    }
+
 
     // Example for Service Discovery with ECS Cluster
     // auth-service.patient-management.local , patient-service.patient-management.local, billing-service.patient-management.local
