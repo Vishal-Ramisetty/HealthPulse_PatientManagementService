@@ -1,7 +1,7 @@
 Setup Guide
 This Project contains following services and folders:
 
-Project Structure:
+**Project Structure:**
 
 .
 ├── .idea
@@ -160,6 +160,7 @@ Project Structure:
 │               └── com
 │                   └── pm
 │                       └── patientservice
+
 
 
 To Do:
